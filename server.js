@@ -1,11 +1,12 @@
 var express = require('express');
 var bodyParser = require('body-parser')
+var _ = require('underscore');
+
 var app = express();
 var PORT = process.env.PORT || 3000;
 var todos = [];
 var todoNextId = 1;
 
-// add body to todos array and add id field to todonextid and then add one to it so it incrments each time one is added
 
 app.use(bodyParser.json());
 
@@ -19,13 +20,7 @@ app.get('/todos', function(req, res){
 
 app.get('/todos/:id', function(req, res){
   var todoId = parseInt(req.params.id, 10);
-  var matchedToDo;
-
-  todos.forEach(function (todo) {
-    if (todo.id === todoId){
-      matchedToDo = todo;
-    }
-  });
+  var matchedToDo = _.findWhere(todos, {id: todoId});
 
   if (matchedToDo) {
     res.json(matchedToDo);
@@ -35,11 +30,14 @@ app.get('/todos/:id', function(req, res){
 });
 
 app.post('/todos', function (req, res) {
-  var body = req.body;
+  var body = _.pick(req.body, 'description', 'completed');
+  body.description = body.description.trim();
 
-  // add id field
+  if (!_.isBoolean(body.completed) || !_.isString(body.description) || !body.description){
+    return res.status(400).send();
+  }
+
   body.id = todoNextId++;
-  // push body into array
   todos.push(body);
 
   res.json(body);
